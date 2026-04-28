@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Digital Business Card</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f6fa;color:#333;min-height:100vh;padding-bottom:100px}
+
+/* ===== Header ===== */
+.header{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);color:#fff;padding:30px 24px 26px;position:relative;overflow:hidden}
+.header::before{content:'';position:absolute;top:-60%;right:-15%;width:240px;height:240px;background:rgba(212,175,55,.06);border-radius:50%}
+.header::after{content:'';position:absolute;bottom:-40%;left:-10%;width:180px;height:180px;background:rgba(212,175,55,.04);border-radius:50%}
+.header-content{display:flex;align-items:flex-start;justify-content:space-between;max-width:640px;margin:0 auto;position:relative;z-index:1;gap:16px}
+.header-left{flex:1;min-width:0}
+.name{font-size:26px;font-weight:700;margin-bottom:3px;letter-spacing:1px}
+.position{font-size:13px;color:rgba(255,255,255,.65);margin-bottom:16px;font-weight:400}
+.info-list{display:flex;flex-direction:column;gap:9px}
+.info-item{display:flex;align-items:center;gap:10px;font-size:13px;color:rgba(255,255,255,.88);min-width:0}
+.info-item .icon{font-size:15px;flex-shrink:0;color:#d4af37;width:20px;text-align:center}
+.info-item span.txt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.info-item a{color:rgba(255,255,255,.88);text-decoration:none;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.info-item a:hover{color:#d4af37}
+.header-right{flex-shrink:0;padding-top:2px}
+.logo-placeholder{width:80px;height:80px;background:rgba(212,175,55,.12);border:2px solid rgba(212,175,55,.35);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:#d4af37;letter-spacing:0;overflow:hidden;background-size:cover;background-position:center}
+.logo-placeholder img{width:100%;height:100%;object-fit:cover;border-radius:14px}
+
+/* ===== Quick Buttons ===== */
+.quick-btns{display:flex;justify-content:center;gap:10px;padding:16px 20px;background:#fff;flex-wrap:wrap;border-bottom:1px solid #f0f0f0}
+.qbtn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:11px 14px;border:none;background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;border-radius:12px;font-size:11px;cursor:pointer;transition:all .25s;min-width:68px;border:none;letter-spacing:.3px}
+.qbtn:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.qbtn:active{transform:scale(.95)}
+.qbtn .icon{font-size:22px}
+.qbtn.call{background:linear-gradient(135deg,#27ae60,#2ecc71)}
+.qbtn.wechat{background:linear-gradient(135deg,#07c160,#25d366)}
+.qbtn.save{background:linear-gradient(135deg,#d4af37,#f0c75e);color:#1a1a2e}
+.qbtn.share{background:linear-gradient(135deg,#4a90d9,#5bafff)}
+
+/* ===== WhatsApp Popup ===== */
+.wx-popup{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(4px)}
+.wx-popup.show{display:flex}
+.wx-popup-content{background:#fff;border-radius:18px;padding:32px 28px;text-align:center;max-width:310px;width:90%;animation:fadeUp .3s}
+.wx-popup-content h3{font-size:18px;margin-bottom:20px;color:#1a1a2e;font-weight:600}
+.wx-qr{width:190px;height:190px;background:#f5f5f5;border-radius:14px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#aaa;border:1px dashed #ddd;flex-direction:column;gap:8px;overflow:hidden}
+.wx-qr img{width:100%;height:100%;object-fit:cover}
+.wx-qr .hint{font-size:11px}
+.wx-popup-content p{font-size:14px;color:#666;margin-bottom:18px}
+.wx-popup-content p strong{color:#1a1a2e;font-size:16px;display:block;margin-top:4px}
+.close-btn{padding:11px 36px;background:#1a1a2e;color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:500;transition:background .3s}
+.close-btn:hover{background:#2a2a4e}
+
+/* ===== Toast ===== */
+.toast{position:fixed;top:40px;left:50%;transform:translateX(-50%);background:rgba(26,26,46,.92);color:#fff;padding:12px 28px;border-radius:10px;font-size:14px;z-index:2001;display:none;white-space:nowrap;backdrop-filter:blur(4px);box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.toast.show{display:block;animation:fadeDown .3s}
+@keyframes fadeDown{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== Section ===== */
+.section{padding:20px;max-width:640px;margin:0 auto}
+.section-title{font-size:16px;font-weight:600;color:#1a1a2e;margin-bottom:14px;padding-left:12px;border-left:3px solid #d4af37;display:flex;align-items:center;gap:6px}
+
+/* ===== Video ===== */
+.video-wrap{width:100%;aspect-ratio:16/9;background:#1a1a2e;border-radius:14px;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer}
+.video-wrap video{width:100%;height:100%;object-fit:cover;display:none}
+.video-placeholder{text-align:center;color:rgba(255,255,255,.45);font-size:14px;padding:20px}
+.video-placeholder .icon{font-size:42px;display:block;margin-bottom:10px}
+.video-wrap:active .video-placeholder{opacity:.7}
+
+/* ===== PPT ===== */
+.ppt-wrap{position:relative;overflow:hidden;border-radius:14px;background:#1a1a2e;touch-action:pan-y;-webkit-user-select:none;user-select:none}
+.ppt-track{display:flex;transition:transform .45s cubic-bezier(.4,0,.2,1)}
+.ppt-slide{width:100%;flex-shrink:0;padding:30px 28px;min-height:210px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:rgba(255,255,255,.9)}
+.ppt-slide .pi{font-size:38px;margin-bottom:14px}
+.ppt-slide h3{font-size:18px;margin-bottom:10px;color:#d4af37;font-weight:600;letter-spacing:.5px}
+.ppt-slide p{font-size:13px;color:rgba(255,255,255,.7);line-height:1.7;max-width:340px}
+.ppt-dots{display:flex;justify-content:center;gap:7px;padding:14px 0;background:rgba(0,0,0,.2)}
+.ppt-dot{width:7px;height:7px;border-radius:50%;background:rgba(212,175,55,.25);cursor:pointer;transition:all .35s;border:none;padding:0}
+.ppt-dot.active{background:#d4af37;width:22px;border-radius:4px}
+.ppt-arr{position:absolute;top:50%;transform:translateY(-50%);background:rgba(212,175,55,.15);border:none;color:#d4af37;width:38px;height:38px;border-radius:50%;cursor:pointer;font-size:18px;z-index:5;display:flex;align-items:center;justify-content:center;transition:background .25s;opacity:.8}
+.ppt-arr:hover{background:rgba(212,175,55,.3);opacity:1}
+.ppt-arr.prev{left:12px}
+.ppt-arr.next{right:12px}
+
+/* ===== Digital Links ===== */
+.digital-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dcard{background:#fff;border-radius:14px;padding:22px 16px;text-align:center;cursor:pointer;transition:all .3s;box-shadow:0 2px 12px rgba(0,0,0,.06);border:1px solid rgba(212,175,55,.12);text-decoration:none;color:inherit;display:block}
+.dcard:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(212,175,55,.18)}
+.dcard:active{transform:scale(.97)}
+.dcard .dicon{font-size:34px;margin-bottom:12px}
+.dcard h4{font-size:14px;color:#1a1a2e;margin-bottom:5px;font-weight:600}
+.dcard p{font-size:11px;color:#999}
+
+/* ===== Share Banner ===== */
+.share-banner{background:linear-gradient(135deg,#d4af37,#f0c75e);color:#1a1a2e;padding:10px 16px;text-align:center;font-size:12px;font-weight:500;display:none}
+.share-banner.show{display:block}
+.share-banner strong{font-weight:700}
+
+/* ===== Admin Trigger ===== */
+.admin-trigger{position:fixed;bottom:20px;right:20px;width:50px;height:50px;background:#d4af37;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;z-index:999;box-shadow:0 4px 18px rgba(212,175,55,.4);transition:all .3s;border:none}
+.admin-trigger:hover{transform:scale(1.1);box-shadow:0 6px 24px rgba(212,175,55,.5)}
+
+/* ===== Password Popup ===== */
+.pwd-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:3000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.pwd-overlay.show{display:flex}
+.pwd-box{background:#fff;border-radius:20px;padding:32px 28px;width:300px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:pwdIn .25s ease}
+@keyframes pwdIn{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.pwd-icon{font-size:42px;margin-bottom:12px}
+.pwd-title{font-size:17px;font-weight:700;color:#1a1a2e;margin-bottom:6px}
+.pwd-sub{font-size:13px;color:#999;margin-bottom:22px}
+.pwd-input{width:100%;border:2px solid #e8e8e8;border-radius:12px;padding:13px 16px;font-size:16px;letter-spacing:4px;text-align:center;outline:none;transition:border-color .2s;color:#1a1a2e}
+.pwd-input:focus{border-color:#d4af37}
+.pwd-input.error{border-color:#ff4d4f;animation:shake .3s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.pwd-tip{font-size:12px;color:#ff4d4f;margin-top:8px;min-height:18px}
+.pwd-btns{display:flex;gap:10px;margin-top:20px}
+.pwd-btn{flex:1;padding:12px;border-radius:10px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s}
+.pwd-btn.cancel{background:#f5f5f5;color:#666}
+.pwd-btn.cancel:hover{background:#ebebeb}
+.pwd-btn.confirm{background:#d4af37;color:#fff}
+.pwd-btn.confirm:hover{background:#c49b2a}
+.fab-copy{position:fixed;bottom:80px;right:20px;width:50px;height:50px;background:#4a90d9;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;z-index:999;box-shadow:0 4px 16px rgba(74,144,217,.4);transition:all .3s;border:none}
+.fab-copy:hover{transform:scale(1.1)}
+
+/* ===== Admin Panel ===== */
+.admin-panel{position:fixed;inset:0;background:#f5f6fa;z-index:2000;display:none;flex-direction:column}
+.admin-panel.show{display:flex}
+.admin-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:#1a1a2e;color:#fff;font-size:15px;font-weight:600;flex-shrink:0}
+.admin-header .back-btn{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px;line-height:1}
+.admin-header .title{flex:1;text-align:center}
+.admin-body{padding:16px;overflow-y:auto;flex:1;max-width:640px;margin:0 auto;width:100%;padding-bottom:40px}
+.admin-section{background:#fff;border-radius:14px;padding:18px 16px;margin-bottom:14px}
+.admin-section h3{font-size:13px;color:#888;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #f0f0f0;font-weight:600;display:flex;align-items:center;gap:6px;letter-spacing:.3px}
+.form-group{margin-bottom:13px}
+.form-group label{display:block;font-size:12px;color:#777;margin-bottom:5px;font-weight:500}
+.form-group input,.form-group textarea{width:100%;padding:11px 12px;border:1.5px solid #e8e8e8;border-radius:9px;font-size:13px;background:#fafafa;color:#222;outline:none;transition:border .3s,background .3s;font-family:inherit}
+.form-group input:focus,.form-group textarea:focus{border-color:#d4af37;background:#fff}
+.form-group textarea{resize:vertical;min-height:65px}
+
+/* Upload */
+.upload-area{display:flex;flex-direction:column;gap:8px}
+.upload-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:#f5f7ff;border:1.5px dashed #4a90d9;border-radius:9px;color:#4a90d9;font-size:13px;cursor:pointer;transition:all .3s}
+.upload-btn:hover{background:#e8f0ff;border-color:#3a7fc9}
+.upload-btn input{display:none}
+.upload-preview{display:flex;align-items:center;gap:10px;padding:10px;background:#f5f5f5;border-radius:8px}
+.upload-preview img{max-width:60px;max-height:60px;border-radius:6px;object-fit:cover}
+.upload-preview video{max-width:100px;max-height:60px;border-radius:6px;object-fit:cover}
+.upload-preview .file-info{flex:1;font-size:12px;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.upload-preview .remove-btn{background:#ff4d4f;color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+
+/* Upload Status */
+.upload-status{padding:8px 12px;background:#e6f7ff;border-radius:6px;font-size:12px;color:#1890ff;display:none}
+.upload-status.show{display:block}
+.upload-status.loading{background:#fff7e6;color:#fa8c16}
+.upload-status.error{background:#fff1f0;color:#f5222d}
+.upload-status.success{background:#f6ffed;color:#52c41a}
+
+.btn-primary{width:100%;padding:14px;background:#d4af37;color:#1a1a2e;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:6px;transition:background .3s;letter-spacing:.5px}
+.btn-primary:hover{background:#c9a030}
+.btn-primary:disabled{background:#ccc;cursor:not-allowed}
+.btn-share{width:100%;padding:14px;background:#4a90d9;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;transition:background .3s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-share:hover{background:#3a7fc9}
+.btn-secondary{width:100%;padding:11px;background:#f0f0f0;color:#666;border:none;border-radius:8px;font-size:13px;cursor:pointer;margin-top:8px;transition:background .3s}
+.btn-secondary:hover{background:#e0e0e0}
+.admin-tip{padding:14px 16px;background:#fffbe6;border-radius:12px;font-size:12px;color:#856404;line-height:1.7;margin-bottom:14px;border:1px solid #ffeeba}
+.admin-tip strong{font-weight:700}
+.share-url-box{padding:12px;background:#f5f7ff;border-radius:10px;border:1px dashed #4a90d9;margin-top:10px;display:none}
+.share-url-box.show{display:block}
+.share-url-box p{font-size:11px;color:#4a90d9;margin-bottom:8px;font-weight:600}
+.share-url-box textarea{width:100%;padding:10px;font-size:11px;border:1px solid #d0d9f0;border-radius:7px;background:#fff;color:#333;resize:none;height:52px;font-family:monospace}
+.copy-btn{padding:8px 16px;background:#4a90d9;color:#fff;border:none;border-radius:7px;font-size:12px;cursor:pointer;margin-top:8px;width:100%;font-weight:600;transition:background .3s}
+.copy-btn:hover{background:#3a7fc9}
+
+/* Sync Status */
+.sync-badge{position:fixed;top:20px;left:20px;padding:6px 12px;background:rgba(26,26,46,.9);color:#fff;border-radius:20px;font-size:11px;z-index:3000;display:none;align-items:center;gap:6px}
+.sync-badge.show{display:flex}
+.sync-badge .dot{width:8px;height:8px;border-radius:50%;background:#faad14;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Loading */
+.loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.9);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:5000;gap:16px}
+.loading-overlay.show{display:flex}
+.loading-spinner{width:40px;height:40px;border:3px solid #f0f0f0;border-top-color:#d4af37;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:14px;color:#666}
+</style>
+</head>
+<body>
+
+<!-- Sync Status -->
+<div class="sync-badge" id="syncBadge">
+  <span class="dot"></span>
+  <span id="syncText">Syncing...</span>
+</div>
+
+<!-- Loading -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loadingText">Loading...</div>
+</div>
+
+<!-- Share Banner -->
+<div class="share-banner" id="shareBanner">
+  📋 This is <strong id="bannerName">StarHub</strong>'s business card · Tap <span style="background:rgba(255,255,255,.25);padding:1px 6px;border-radius:4px;margin:0 2px">⚙️</span> at bottom right to edit
+</div>
+
+<!-- ===== Main Card ===== -->
+<div id="app">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-content">
+      <div class="header-left">
+        <div class="name" id="d-name">Name</div>
+        <div class="position" id="d-position">Position · Company</div>
+        <div class="info-list">
+          <div class="info-item" id="d-phone-row">
+            <span class="icon">📞</span>
+            <span class="txt" id="d-phone">Add phone number</span>
+          </div>
+          <div class="info-item" id="d-wechat-row">
+            <span class="icon">💬</span>
+            <span class="txt" id="d-wechat">Add WhatsApp</span>
+          </div>
+          <div class="info-item" id="d-email-row">
+            <span class="icon">✉️</span>
+            <span class="txt" id="d-email">Add email</span>
+          </div>
+          <div class="info-item" id="d-website-row">
+            <span class="icon">🌐</span>
+            <a id="d-website" href="#" onclick="return false">Add website</a>
+          </div>
+          <div class="info-item" id="d-address-row">
+            <span class="icon">📍</span>
+            <span class="txt" id="d-address">Add address</span>
+          </div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="logo-placeholder" id="d-logo">LOGO</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Buttons -->
+  <div class="quick-btns">
+    <button class="qbtn call" onclick="doCall()"><span class="icon">📞</span>Call</button>
+    <button class="qbtn wechat" onclick="showWechat()"><span class="icon">💬</span>WhatsApp</button>
+    <button class="qbtn save" onclick="saveContact()"><span class="icon">👤</span>Save</button>
+    <button class="qbtn share" onclick="shareLink()"><span class="icon">🔗</span>Share</button>
+  </div>
+
+  <!-- Video -->
+  <div class="section">
+    <div class="section-title" id="d-video-title-display">🏢 Company Introduction Video</div>
+    <div class="video-wrap" id="videoWrap" onclick="playVideo()">
+      <video id="d-video" src="" controls controlsList="nodownload"></video>
+      <div class="video-placeholder" id="videoPlaceholder">
+        <span class="icon">▶️</span>
+        <span id="d-video-tip">Click to play company introduction video</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PPT -->
+  <div class="section">
+    <div class="section-title" id="d-ppt-section-title">📋 Company Culture</div>
+    <div class="ppt-wrap" id="pptContainer">
+      <div class="ppt-track" id="pptTrack">
+        <div class="ppt-slide">
+          <div class="pi">🚀</div>
+          <h3 id="d-ppt1t">Please edit</h3>
+          <p id="d-ppt1c">Edit in admin panel</p>
+        </div>
+        <div class="ppt-slide">
+          <div class="pi">🎯</div>
+          <h3 id="d-ppt2t">Please edit</h3>
+          <p id="d-ppt2c">Edit in admin panel</p>
+        </div>
+        <div class="ppt-slide">
+          <div class="pi">🤝</div>
+          <h3 id="d-ppt3t">Please edit</h3>
+          <p id="d-ppt3c">Edit in admin panel</p>
+        </div>
+        <div class="ppt-slide">
+          <div class="pi">🏆</div>
+          <h3 id="d-ppt4t">Please edit</h3>
+          <p id="d-ppt4c">Edit in admin panel</p>
+        </div>
+        <div class="ppt-slide">
+          <div class="pi">💡</div>
+          <h3 id="d-ppt5t">Please edit</h3>
+          <p id="d-ppt5c">Edit in admin panel</p>
+        </div>
+      </div>
+      <button class="ppt-arr prev" onclick="changeSlide(-1)">‹</button>
+      <button class="ppt-arr next" onclick="changeSlide(1)">›</button>
+      <div class="ppt-dots" id="pptDots"></div>
+    </div>
+  </div>
+
+  <!-- Digital Links -->
+  <div class="section">
+    <div class="section-title" id="d-digital-title">🔗 Digital Links</div>
+    <div class="digital-cards">
+      <div class="dcard" id="dcard-web" onclick="gotoWeb()">
+        <div class="dicon">🌐</div>
+        <h4 id="d-web-title">Company Website</h4>
+        <p id="d-web-desc">Tap to visit</p>
+      </div>
+      <div class="dcard" id="dcard-book" onclick="gotoBook()">
+        <div class="dicon">📖</div>
+        <h4 id="d-book-title">Company Introduction</h4>
+        <p id="d-book-desc">Tap to view</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WhatsApp Popup -->
+<div class="wx-popup" id="wxPopup">
+  <div class="wx-popup-content">
+    <h3>Contact Us on WhatsApp</h3>
+    <div class="wx-qr" id="wx-qr">
+      <span>🖼️</span>
+      <span class="hint">QR Code Area</span>
+      <span class="hint">(Upload WhatsApp QR)</span>
+    </div>
+    <p>WhatsApp: <span id="d-wechat2">Add number</span></p>
+    <button class="close-btn" onclick="closeWechat()">Close</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Admin Trigger -->
+<button class="admin-trigger" onclick="checkPassword()" title="⚙️ Edit">⚙️</button>
+
+<!-- Password Popup -->
+<div class="pwd-overlay" id="pwdOverlay" onclick="closePwdOnBg(event)">
+  <div class="pwd-box">
+    <div class="pwd-icon">🔐</div>
+    <div class="pwd-title">Edit Permission</div>
+    <div class="pwd-sub">Enter admin password</div>
+    <input class="pwd-input" id="pwdInput" type="password" maxlength="20"
+      placeholder="Enter password"
+      onkeydown="if(event.key==='Enter')confirmPwd()"
+      oninput="$('pwdTip').textContent=''">
+    <div class="pwd-tip" id="pwdTip"></div>
+    <div class="pwd-btns">
+      <button class="pwd-btn cancel" onclick="closePwd()">Cancel</button>
+      <button class="pwd-btn confirm" onclick="confirmPwd()">Edit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Admin Panel ===== -->
+<div class="admin-panel" id="adminPanel">
+  <div class="admin-header">
+    <button class="back-btn" onclick="closeAdmin()">←</button>
+    <span class="title">⚙️ Content Manager</span>
+    <div style="width:40px"></div>
+  </div>
+  <div class="admin-body">
+
+    <div class="admin-tip">
+      💡 <strong>Instructions:</strong> Fill in content and click "Save" to update. All changes sync to cloud automatically. Other users can see updates after refresh. Supports images and videos!
+    </div>
+
+    <!-- Image Upload -->
+    <div class="admin-section">
+      <h3>🖼️ Image Upload</h3>
+      
+      <div class="form-group">
+        <label>Logo (1:1 ratio recommended)</label>
+        <div class="upload-area">
+          <label class="upload-btn" id="logoUploadBtn">
+            <input type="file" accept="image/*" id="logoFile" onchange="handleLogoUpload(this)">
+            📷 Choose Image
+          </label>
+          <div class="upload-preview" id="logoPreview" style="display:none">
+            <img id="logoPreviewImg" src="" alt="Logo preview">
+            <span class="file-info" id="logoFileName">logo.jpg</span>
+            <button class="remove-btn" onclick="removeLogo()">×</button>
+          </div>
+          <div class="upload-status" id="logoUploadStatus"></div>
+          <input type="hidden" id="f-logo-url" value="">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>WhatsApp QR Code (1:1 ratio)</label>
+        <div class="upload-area">
+          <label class="upload-btn" id="wechatUploadBtn">
+            <input type="file" accept="image/*" id="wechatFile" onchange="handleWechatUpload(this)">
+            📷 Choose Image
+          </label>
+          <div class="upload-preview" id="wechatPreview" style="display:none">
+            <img id="wechatPreviewImg" src="" alt="WhatsApp QR preview">
+            <span class="file-info" id="wechatFileName">wechat.jpg</span>
+            <button class="remove-btn" onclick="removeWechat()">×</button>
+          </div>
+          <div class="upload-status" id="wechatUploadStatus"></div>
+          <input type="hidden" id="f-wechat-qr-url" value="">
+        </div>
+      </div>
+    </div>
+
+    <!-- Video Upload -->
+    <div class="admin-section">
+      <h3>🎬 Video Upload</h3>
+      <div class="form-group">
+        <label>Company Video (MP4, max 50MB)</label>
+        <div class="upload-area">
+          <label class="upload-btn" id="videoUploadBtn">
+            <input type="file" accept="video/mp4,video/*" id="videoFile" onchange="handleVideoUpload(this)">
+            🎬 Choose Video
+          </label>
+          <div class="upload-preview" id="videoPreview" style="display:none">
+            <video id="videoPreviewPlayer" src="" muted></video>
+            <span class="file-info" id="videoFileName">video.mp4</span>
+            <button class="remove-btn" onclick="removeVideo()">×</button>
+          </div>
+          <div class="upload-status" id="videoUploadStatus"></div>
+          <input type="hidden" id="f-video-url" value="">
+        </div>
+      </div>
+    </div>
+
+    <!-- Basic Info -->
+    <div class="admin-section">
+      <h3>👤 Basic Info</h3>
+      <div class="form-group"><label>Name</label><input type="text" id="f-name" placeholder="Enter name"></div>
+      <div class="form-group"><label>Position / Title</label><input type="text" id="f-position" placeholder="e.g. CEO"></div>
+      <div class="form-group"><label>Company</label><input type="text" id="f-company" placeholder="Company name"></div>
+      <div class="form-group"><label>Logo Text (1 char)</label><input type="text" id="f-logo" maxlength="1" placeholder="1 letter"></div>
+    </div>
+
+    <!-- Contact Info -->
+    <div class="admin-section">
+      <h3>📞 Contact Info</h3>
+      <div class="form-group"><label>Phone</label><input type="tel" id="f-phone" placeholder="+1 234 567 8900"></div>
+      <div class="form-group"><label>WhatsApp</label><input type="text" id="f-wechat" placeholder="WhatsApp number"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="f-email" placeholder="example@domain.com"></div>
+      <div class="form-group"><label>Website (https://)</label><input type="url" id="f-website" placeholder="https://www.example.com"></div>
+      <div class="form-group"><label>Address</label><input type="text" id="f-address" placeholder="Full address"></div>
+    </div>
+
+    <!-- Page Titles -->
+    <div class="admin-section">
+      <h3>🏷️ Page Titles</h3>
+      <div class="form-group"><label>Video Title</label><input type="text" id="f-video-title" placeholder="e.g. Company Video"></div>
+      <div class="form-group"><label>Video Tip</label><input type="text" id="f-video-tip" placeholder="e.g. Tap to play"></div>
+      <div class="form-group"><label>Slides Title</label><input type="text" id="f-ppt-section-title" placeholder="e.g. Company Culture"></div>
+      <div class="form-group"><label>Links Title</label><input type="text" id="f-digital-title" placeholder="e.g. Digital Links"></div>
+    </div>
+
+    <!-- Slides Content -->
+    <div class="admin-section">
+      <h3>📋 Slides Content (5 slides)</h3>
+      <div class="form-group"><label>Slide 1 Title</label><input type="text" id="f-ppt1t" placeholder="Slide title"></div>
+      <div class="form-group"><label>Slide 1 Content</label><textarea id="f-ppt1c" placeholder="Slide description"></textarea></div>
+      <div class="form-group"><label>Slide 2 Title</label><input type="text" id="f-ppt2t" placeholder="Slide title"></div>
+      <div class="form-group"><label>Slide 2 Content</label><textarea id="f-ppt2c" placeholder="Slide description"></textarea></div>
+      <div class="form-group"><label>Slide 3 Title</label><input type="text" id="f-ppt3t" placeholder="Slide title"></div>
+      <div class="form-group"><label>Slide 3 Content</label><textarea id="f-ppt3c" placeholder="Slide description"></textarea></div>
+      <div class="form-group"><label>Slide 4 Title</label><input type="text" id="f-ppt4t" placeholder="Slide title"></div>
+      <div class="form-group"><label>Slide 4 Content</label><textarea id="f-ppt4c" placeholder="Slide description"></textarea></div>
+      <div class="form-group"><label>Slide 5 Title</label><input type="text" id="f-ppt5t" placeholder="Slide title"></div>
+      <div class="form-group"><label>Slide 5 Content</label><textarea id="f-ppt5c" placeholder="Slide description"></textarea></div>
+    </div>
+
+    <!-- Digital Links -->
+    <div class="admin-section">
+      <h3>🔗 Digital Links (Website & Introduction)</h3>
+      <div class="form-group"><label>Website Name</label><input type="text" id="f-web-title" placeholder="Website"></div>
+      <div class="form-group"><label>Website URL</label><input type="url" id="f-web-url" placeholder="https://www.yourcompany.com"></div>
+      <div class="form-group"><label>Introduction Name</label><input type="text" id="f-book-title" placeholder="Company Introduction"></div>
+      <div class="form-group"><label>Introduction URL (PDF/Web)</label><input type="url" id="f-book-url" placeholder="https://your-intro.pdf"></div>
+    </div>
+
+    <button class="btn-primary" id="saveBtn" onclick="saveData()">💾 Save & Sync to Cloud</button>
+    <button class="btn-secondary" onclick="loadFromCloud()">🔄 Reload from Cloud</button>
+    <div style="height:20px"></div>
+  </div>
+</div>
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// ===== Supabase Config (Card 3 - 新账号) =====
+const SB_URL = 'https://jhcandfoyyoscwungbon.supabase.co';
+const SB_KEY = 'sb_publishable_V8p3O0IILyEJO6B_4yxZtQ_OgxFXbZn';
+
+
+
+var sbClient = null;
+
+// ===== Default Data =====
+const DEFAULT_DATA = {
+  name:'Name',position:'Position · Company',company:'Company',logo:'LOGO',
+  phone:'',wechat:'',email:'',website:'',address:'',video:'',
+  videoTitle:'🏢 Company Introduction Video',pptSectionTitle:'📋 Company Culture',
+  digitalTitle:'🔗 Digital Links',
+  videoTip:'Click to play company introduction video',
+  ppt1t:'About Us',ppt1c:'Edit in admin panel',
+  ppt2t:'Our Vision',ppt2c:'Edit in admin panel',
+  ppt3t:'Our Values',ppt3c:'Edit in admin panel',
+  ppt4t:'Our Strengths',ppt4c:'Edit in admin panel',
+  ppt5t:'Our Plans',ppt5c:'Edit in admin panel',
+  webTitle:'Company Website',webUrl:'',bookTitle:'Company Introduction',bookUrl:'',
+  logoUrl:'', wechatQrUrl:''
+};
+
+// ===== Init Supabase =====
+async function initSupabase() {
+  try {
+    if (window.supabase) {
+      sbClient = window.supabase.createClient(SB_URL, SB_KEY);
+      console.log('Supabase Card3 initialized successfully');
+      return true;
+    }
+    console.error('Supabase SDK not loaded');
+    return false;
+  } catch (err) {
+    console.error('Supabase init failed:', err);
+    return false;
+  }
+}
+
+// ===== File Upload =====
+async function uploadFile(file, folder) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => {
+      console.error('File read failed');
+      resolve(null);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Logo Upload
+async function handleLogoUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById('logoUploadStatus');
+  const previewEl = document.getElementById('logoPreview');
+  const previewImg = document.getElementById('logoPreviewImg');
+  const fileNameEl = document.getElementById('logoFileName');
+  const urlInput = document.getElementById('f-logo-url');
+
+  statusEl.className = 'upload-status show loading';
+  statusEl.textContent = 'Uploading...';
+
+  const url = await uploadFile(file, 'logos');
+  
+  if (url) {
+    statusEl.className = 'upload-status show success';
+    statusEl.textContent = '✅ Upload successful!';
+    
+    previewImg.src = url;
+    fileNameEl.textContent = file.name;
+    urlInput.value = url;
+    previewEl.style.display = 'flex';
+    
+    const reader = new FileReader();
+    reader.onload = e => previewImg.src = e.target.result;
+    reader.readAsDataURL(file);
+    
+    setTimeout(() => statusEl.classList.remove('show'), 2000);
+  } else {
+    statusEl.className = 'upload-status show error';
+    statusEl.textContent = '❌ Upload failed';
+    setTimeout(() => statusEl.classList.remove('show'), 3000);
+  }
+}
+
+function removeLogo() {
+  document.getElementById('logoPreview').style.display = 'none';
+  document.getElementById('f-logo-url').value = '';
+  document.getElementById('logoFile').value = '';
+}
+
+// WhatsApp QR Upload
+async function handleWechatUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById('wechatUploadStatus');
+  const previewEl = document.getElementById('wechatPreview');
+  const previewImg = document.getElementById('wechatPreviewImg');
+  const fileNameEl = document.getElementById('wechatFileName');
+  const urlInput = document.getElementById('f-wechat-qr-url');
+
+  statusEl.className = 'upload-status show loading';
+  statusEl.textContent = 'Uploading...';
+
+  const url = await uploadFile(file, 'wechat');
+  
+  if (url) {
+    statusEl.className = 'upload-status show success';
+    statusEl.textContent = '✅ Upload successful!';
+    
+    previewImg.src = url;
+    fileNameEl.textContent = file.name;
+    urlInput.value = url;
+    previewEl.style.display = 'flex';
+    
+    const reader = new FileReader();
+    reader.onload = e => previewImg.src = e.target.result;
+    reader.readAsDataURL(file);
+    
+    setTimeout(() => statusEl.classList.remove('show'), 2000);
+  } else {
+    statusEl.className = 'upload-status show error';
+    statusEl.textContent = '❌ Upload failed';
+    setTimeout(() => statusEl.classList.remove('show'), 3000);
+  }
+}
+
+function removeWechat() {
+  document.getElementById('wechatPreview').style.display = 'none';
+  document.getElementById('f-wechat-qr-url').value = '';
+  document.getElementById('wechatFile').value = '';
+}
+
+// Video Upload
+async function handleVideoUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  if (file.size > 50 * 1024 * 1024) {
+    toast('Video file too large, max 50MB');
+    return;
+  }
+
+  const statusEl = document.getElementById('videoUploadStatus');
+  const previewEl = document.getElementById('videoPreview');
+  const previewPlayer = document.getElementById('videoPreviewPlayer');
+  const fileNameEl = document.getElementById('videoFileName');
+  const urlInput = document.getElementById('f-video-url');
+
+  statusEl.className = 'upload-status show loading';
+  statusEl.textContent = 'Uploading, please wait...';
+
+  const url = await uploadFile(file, 'videos');
+  
+  if (url) {
+    statusEl.className = 'upload-status show success';
+    statusEl.textContent = '✅ Upload successful!';
+    
+    previewPlayer.src = url;
+    fileNameEl.textContent = file.name;
+    urlInput.value = url;
+    previewEl.style.display = 'flex';
+    
+    const reader = new FileReader();
+    reader.onload = e => previewPlayer.src = e.target.result;
+    reader.readAsDataURL(file);
+    
+    setTimeout(() => statusEl.classList.remove('show'), 2000);
+  } else {
+    statusEl.className = 'upload-status show error';
+    statusEl.textContent = '❌ Upload failed';
+    setTimeout(() => statusEl.classList.remove('show'), 3000);
+  }
+}
+
+function removeVideo() {
+  document.getElementById('videoPreview').style.display = 'none';
+  document.getElementById('f-video-url').value = '';
+  document.getElementById('videoFile').value = '';
+}
+
+// ===== Cloud Data =====
+async function saveToCloud(data) {
+  if (!sbClient) return false;
+
+  const cardId = 'default-card';
+  
+  const cloudData = {
+    name: data.name,
+    position: data.position,
+    company: data.company,
+    logo: data.logo,
+    phone: data.phone,
+    wechat: data.wechat,
+    email: data.email,
+    website: data.website,
+    address: data.address,
+    video: data.video,
+    video_title: data.videoTitle,
+    ppt_section_title: data.pptSectionTitle,
+    digital_title: data.digitalTitle,
+    video_tip: data.videoTip,
+    ppt1t: data.ppt1t,
+    ppt1c: data.ppt1c,
+    ppt2t: data.ppt2t,
+    ppt2c: data.ppt2c,
+    ppt3t: data.ppt3t,
+    ppt3c: data.ppt3c,
+    ppt4t: data.ppt4t,
+    ppt4c: data.ppt4c,
+    ppt5t: data.ppt5t,
+    ppt5c: data.ppt5c,
+    web_title: data.webTitle,
+    web_url: data.webUrl || '',
+    book_title: data.bookTitle,
+    book_url: data.bookUrl || '',
+    logo_url: data.logoUrl || '',
+    wechat_qr_url: data.wechatQrUrl || '',
+    updated_at: new Date().toISOString()
+  };
+
+  try {
+    const { data: existing } = await sbClient
+      .from('cards')
+      .select('id')
+      .eq('id', cardId)
+      .single();
+
+    if (existing) {
+      const { error } = await sbClient
+        .from('cards')
+        .update(cloudData)
+        .eq('id', cardId);
+      if (error) throw error;
+    } else {
+      cloudData.id = cardId;
+      const { error } = await sbClient
+        .from('cards')
+        .insert([cloudData]);
+      if (error) throw error;
+    }
+    return true;
+  } catch (err) {
+    console.error('Failed to save to cloud:', err);
+    return false;
+  }
+}
+
+async function loadFromCloudDB() {
+  if (!sbClient) return null;
+
+  try {
+    const { data, error } = await sbClient
+      .from('cards')
+      .select('*')
+      .eq('id', 'default-card')
+      .single();
+
+    if (error) return null;
+
+    return {
+      name: data.name || DEFAULT_DATA.name,
+      position: data.position || DEFAULT_DATA.position,
+      company: data.company || DEFAULT_DATA.company,
+      logo: data.logo || DEFAULT_DATA.logo,
+      phone: data.phone || '',
+      wechat: data.wechat || '',
+      email: data.email || '',
+      website: data.website || '',
+      address: data.address || '',
+      video: data.video || '',
+      videoTitle: data.video_title || DEFAULT_DATA.videoTitle,
+      pptSectionTitle: data.ppt_section_title || DEFAULT_DATA.pptSectionTitle,
+      digitalTitle: data.digital_title || DEFAULT_DATA.digitalTitle,
+      videoTip: data.video_tip || DEFAULT_DATA.videoTip,
+      ppt1t: data.ppt1t || DEFAULT_DATA.ppt1t,
+      ppt1c: data.ppt1c || '',
+      ppt2t: data.ppt2t || DEFAULT_DATA.ppt2t,
+      ppt2c: data.ppt2c || '',
+      ppt3t: data.ppt3t || DEFAULT_DATA.ppt3t,
+      ppt3c: data.ppt3c || '',
+      ppt4t: data.ppt4t || DEFAULT_DATA.ppt4t,
+      ppt4c: data.ppt4c || '',
+      ppt5t: data.ppt5t || DEFAULT_DATA.ppt5t,
+      ppt5c: data.ppt5c || '',
+      webTitle: data.web_title || DEFAULT_DATA.webTitle,
+      webUrl: data.web_url || '',
+      bookTitle: data.book_title || DEFAULT_DATA.bookTitle,
+      bookUrl: data.book_url || '',
+      logoUrl: data.logo_url || '',
+      wechatQrUrl: data.wechat_qr_url || ''
+    };
+  } catch (err) {
+    console.error('Failed to load from cloud:', err);
+    return null;
+  }
+}
+
+// ===== Data =====
+function getLocalData() {
+  try {
+    const d = localStorage.getItem('nfc_card3');
+    return d ? { ...DEFAULT_DATA, ...JSON.parse(d) } : { ...DEFAULT_DATA };
+  } catch (e) {
+    return { ...DEFAULT_DATA };
+  }
+}
+
+function saveLocal(data) {
+  try {
+    localStorage.setItem('nfc_card3', JSON.stringify(data));
+  } catch (e) {}
+}
+
+function loadForm(d) {
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val || '';
+  };
+
+  set('f-name', d.name);
+  set('f-position', d.position);
+  set('f-company', d.company);
+  set('f-logo', d.logo);
+  set('f-phone', d.phone);
+  set('f-wechat', d.wechat);
+  set('f-email', d.email);
+  set('f-website', d.website);
+  set('f-address', d.address);
+  set('f-video-url', d.video || '');
+  set('f-video-title', d.videoTitle);
+  set('f-ppt-section-title', d.pptSectionTitle);
+  set('f-digital-title', d.digitalTitle);
+  set('f-video-tip', d.videoTip);
+  set('f-ppt1t', d.ppt1t);
+  set('f-ppt1c', d.ppt1c);
+  set('f-ppt2t', d.ppt2t);
+  set('f-ppt2c', d.ppt2c);
+  set('f-ppt3t', d.ppt3t);
+  set('f-ppt3c', d.ppt3c);
+  set('f-ppt4t', d.ppt4t);
+  set('f-ppt4c', d.ppt4c);
+  set('f-ppt5t', d.ppt5t);
+  set('f-ppt5c', d.ppt5c);
+  set('f-web-title', d.webTitle);
+  set('f-web-url', d.webUrl || '');
+  set('f-book-title', d.bookTitle);
+  set('f-book-url', d.bookUrl || '');
+
+  set('f-logo-url', d.logoUrl || '');
+  if (d.logoUrl) {
+    document.getElementById('logoPreviewImg').src = d.logoUrl;
+    document.getElementById('logoPreview').style.display = 'flex';
+  }
+
+  set('f-wechat-qr-url', d.wechatQrUrl || '');
+  if (d.wechatQrUrl) {
+    document.getElementById('wechatPreviewImg').src = d.wechatQrUrl;
+    document.getElementById('wechatPreview').style.display = 'flex';
+  }
+
+  set('f-video-url', d.video || '');
+  if (d.video) {
+    document.getElementById('videoPreviewPlayer').src = d.video;
+    document.getElementById('videoPreview').style.display = 'flex';
+    document.getElementById('videoFileName').textContent = 'Video uploaded';
+  }
+}
+
+function collectForm() {
+  return {
+    name: $('f-name').value.trim() || 'Name',
+    position: $('f-position').value.trim() || 'Position · Company',
+    company: $('f-company').value.trim() || 'Company',
+    logo: $('f-logo').value.trim().charAt(0) || 'LOGO',
+    phone: $('f-phone').value.trim(),
+    wechat: $('f-wechat').value.trim(),
+    email: $('f-email').value.trim(),
+    website: $('f-website').value.trim(),
+    address: $('f-address').value.trim(),
+    video: $('f-video-url').value.trim(),
+    videoTitle: $('f-video-title').value.trim() || '🏢 Company Introduction Video',
+    pptSectionTitle: $('f-ppt-section-title').value.trim() || '📋 Company Culture',
+    digitalTitle: $('f-digital-title').value.trim() || '🔗 Digital Links',
+    videoTip: $('f-video-tip').value.trim() || 'Click to play company introduction video',
+    ppt1t: $('f-ppt1t').value.trim() || 'About Us',
+    ppt1c: $('f-ppt1c').value.trim(),
+    ppt2t: $('f-ppt2t').value.trim() || 'Our Vision',
+    ppt2c: $('f-ppt2c').value.trim(),
+    ppt3t: $('f-ppt3t').value.trim() || 'Our Values',
+    ppt3c: $('f-ppt3c').value.trim(),
+    ppt4t: $('f-ppt4t').value.trim() || 'Our Strengths',
+    ppt4c: $('f-ppt4c').value.trim(),
+    ppt5t: $('f-ppt5t').value.trim() || 'Our Plans',
+    ppt5c: $('f-ppt5c').value.trim(),
+    webTitle: $('f-web-title').value.trim() || 'Company Website',
+    webUrl: $('f-web-url').value.trim(),
+    bookTitle: $('f-book-title').value.trim() || 'Company Introduction',
+    bookUrl: $('f-book-url').value.trim(),
+    logoUrl: $('f-logo-url').value || '',
+    wechatQrUrl: $('f-wechat-qr-url').value || ''
+  };
+}
+
+// ===== Save =====
+async function saveData() {
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  const d = collectForm();
+  
+  saveLocal(d);
+  
+  const cloudOk = await saveToCloud(d);
+  
+  renderAll(d);
+  
+  btn.disabled = false;
+  btn.textContent = '💾 Save & Sync to Cloud';
+
+  if (cloudOk) {
+    toast('✅ Saved! Synced to cloud');
+  } else {
+    toast('⚠️ Saved locally, but cloud sync failed');
+  }
+  
+  closeAdmin();
+}
+
+async function loadFromCloud() {
+  const cloudData = await loadFromCloudDB();
+  if (cloudData) {
+    saveLocal(cloudData);
+    loadForm(cloudData);
+    toast('✅ Loaded latest data from cloud');
+  } else {
+    toast('⚠️ No data in cloud yet');
+  }
+}
+
+// ===== Render =====
+function renderAll(d) {
+  const isShared = new URLSearchParams(location.search).get('d');
+  if (isShared) {
+    $('shareBanner').classList.add('show');
+    $('bannerName').textContent = d.name;
+  }
+
+  $('d-name').textContent = d.name;
+  $('d-position').textContent = d.position;
+  $('d-phone').textContent = d.phone || 'Add phone number';
+  $('d-wechat').textContent = d.wechat || 'Add WhatsApp';
+  $('d-email').textContent = d.email || 'Add email';
+
+  if (d.website) {
+    $('d-website').textContent = d.website;
+    $('d-website').href = d.website;
+    $('d-website').onclick = null;
+  } else {
+    $('d-website').textContent = 'Add website';
+    $('d-website').href = '#';
+    $('d-website').onclick = e => {
+      e.preventDefault();
+      openAdmin();
+      toast('Please add company website first');
+    };
+  }
+
+  $('d-address').textContent = d.address || 'Add address';
+
+  const logoEl = $('d-logo');
+  if (d.logoUrl) {
+    logoEl.innerHTML = `<img src="${d.logoUrl}" alt="Logo">`;
+    logoEl.style.backgroundImage = 'none';
+  } else {
+    logoEl.textContent = d.logo;
+    logoEl.innerHTML = '';
+  }
+
+  $('d-video-title-display').textContent = d.videoTitle;
+  $('d-ppt-section-title').textContent = d.pptSectionTitle;
+  $('d-digital-title').textContent = d.digitalTitle;
+  $('d-video-tip').textContent = d.videoTip;
+
+  const v = $('d-video');
+  if (d.video) {
+    v.src = d.video;
+    v.style.display = 'block';
+    $('videoPlaceholder').style.display = 'none';
+    $('videoWrap').onclick = () => {
+      v.play();
+    };
+  } else {
+    $('videoWrap').onclick = () => {
+      openAdmin();
+      toast('Please upload video or add video link first');
+    };
+  }
+
+  const titles = [d.ppt1t, d.ppt2t, d.ppt3t, d.ppt4t, d.ppt5t];
+  const contents = [d.ppt1c, d.ppt2c, d.ppt3c, d.ppt4c, d.ppt5c];
+  titles.forEach((t, i) => {
+    document.getElementById('d-ppt' + (i + 1) + 't').textContent = t;
+    document.getElementById('d-ppt' + (i + 1) + 'c').textContent = contents[i] || 'Edit in admin panel';
+  });
+
+  $('d-web-title').textContent = d.webTitle;
+  $('d-web-desc').textContent = d.webUrl ? 'Tap to visit →' : 'Edit in admin panel';
+  $('dcard-web').onclick = d.webUrl ?
+    () => window.open(d.webUrl, '_blank') :
+    () => {
+      openAdmin();
+      toast('Please add website link first');
+    };
+
+  $('d-book-title').textContent = d.bookTitle;
+  $('d-book-desc').textContent = d.bookUrl ? 'Tap to view →' : 'Edit in admin panel';
+  $('dcard-book').onclick = d.bookUrl ?
+    () => window.open(d.bookUrl, '_blank') :
+    () => {
+      openAdmin();
+      toast('Please add catalog link first');
+    };
+
+  $('d-wechat2').textContent = d.wechat || 'Add number';
+
+  const wxQr = $('wx-qr');
+  if (d.wechatQrUrl) {
+    wxQr.innerHTML = `<img src="${d.wechatQrUrl}" alt="WhatsApp QR">`;
+  } else {
+    wxQr.innerHTML = `
+      <span>🖼️</span>
+      <span class="hint">QR Code Area</span>
+      <span class="hint">(Upload WhatsApp QR)</span>
+    `;
+  }
+}
+
+// ===== PPT =====
+let slideIndex = 0,
+  autoTimer = null;
+const TOTAL = 5;
+
+function initPPT() {
+  const dots = $('pptDots');
+  for (let i = 0; i < TOTAL; i++) {
+    const b = document.createElement('button');
+    b.className = 'ppt-dot' + (i === 0 ? ' active' : '');
+    b.onclick = () => goToSlide(i);
+    dots.appendChild(b);
+  }
+  const c = $('pptContainer');
+  let sx = 0;
+  c.addEventListener('touchstart', e => {
+    sx = e.touches[0].clientX;
+  }, {
+    passive: true
+  });
+  c.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - sx;
+    if (Math.abs(dx) > 50) {
+      dx < 0 ? changeSlide(1) : changeSlide(-1);
+    }
+  });
+  autoTimer = setInterval(() => changeSlide(1), 4000);
+}
+
+function goToSlide(n) {
+  slideIndex = n;
+  $('pptTrack').style.transform = `translateX(-${n * 100}%)`;
+  document.querySelectorAll('.ppt-dot').forEach((d, i) => d.className = 'ppt-dot' + (i === n ? ' active' : ''));
+  if (autoTimer) {
+    clearInterval(autoTimer);
+    autoTimer = setInterval(() => changeSlide(1), 4000);
+  }
+}
+
+function changeSlide(dir) {
+  slideIndex = (slideIndex + dir + TOTAL) % TOTAL;
+  goToSlide(slideIndex);
+}
+
+// ===== Actions =====
+function doCall() {
+  const p = getLocalData().phone;
+  if (!p) {
+    openAdmin();
+    toast('Please add phone number first');
+    return;
+  }
+  location.href = 'tel:' + p.replace(/\D/g, '');
+}
+
+function showWechat() {
+  const w = getLocalData().wechat;
+  if (!w) {
+    openAdmin();
+    toast('Please add WhatsApp number first');
+    return;
+  }
+  $('wxPopup').classList.add('show');
+}
+
+function closeWechat() {
+  $('wxPopup').classList.remove('show');
+}
+
+function saveContact() {
+  const d = getLocalData();
+  const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${d.name}\nORG:${d.company}\nTITLE:${d.position}\nTEL:${d.phone}\nEMAIL:${d.email}\nURL:${d.website || ''}\nADR:;;${d.address || ''}\nEND:VCARD`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([vcard], {
+    type: 'text/vcard'
+  }));
+  a.download = (d.name || 'Business Card') + '.vcf';
+  a.click();
+  toast('👤 Contact file downloaded');
+}
+
+function shareLink() {
+  const url = location.href;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => toast('🔗 Link copied!'));
+  } else {
+    prompt('Copy this link:', url);
+  }
+}
+
+function playVideo() {
+  const v = $('d-video');
+  if (v.src) {
+    v.play();
+  } else {
+    openAdmin();
+    toast('Please upload video or add video link first');
+  }
+}
+
+function gotoWeb() {
+  const d = getLocalData();
+  if (d.webUrl) window.open(d.webUrl, '_blank');
+  else {
+    openAdmin();
+    toast('Please add website link first');
+  }
+}
+
+function gotoBook() {
+  const d = getLocalData();
+  if (d.bookUrl) window.open(d.bookUrl, '_blank');
+  else {
+    openAdmin();
+    toast('Please add catalog link first');
+  }
+}
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function showLoading(text = 'Loading...') {
+  $('loadingText').textContent = text;
+  $('loadingOverlay').classList.add('show');
+}
+
+function hideLoading() {
+  $('loadingOverlay').classList.remove('show');
+}
+
+// ===== Password =====
+const ADMIN_PWD = '20262026';
+const PWD_SESSION_KEY = 'nfc_card3_admin_ok';
+
+function checkPassword() {
+  if (sessionStorage.getItem(PWD_SESSION_KEY) === '1') {
+    openAdmin();
+    return;
+  }
+  $('pwdOverlay').classList.add('show');
+  $('pwdInput').value = '';
+  $('pwdTip').textContent = '';
+  setTimeout(() => $('pwdInput').focus(), 100);
+}
+
+function confirmPwd() {
+  const val = $('pwdInput').value.trim();
+  if (val === ADMIN_PWD) {
+    sessionStorage.setItem(PWD_SESSION_KEY, '1');
+    closePwd();
+    openAdmin();
+  } else {
+    $('pwdInput').classList.add('error');
+    $('pwdTip').textContent = 'Wrong password, try again';
+    setTimeout(() => $('pwdInput').classList.remove('error'), 400);
+    $('pwdInput').select();
+  }
+}
+
+function closePwd() {
+  $('pwdOverlay').classList.remove('show');
+}
+
+function closePwdOnBg(e) {
+  if (e.target === $('pwdOverlay')) closePwd();
+}
+
+function openAdmin() {
+  $('adminPanel').classList.add('show');
+  document.body.style.overflow = 'hidden';
+  loadForm(getLocalData());
+}
+
+function closeAdmin() {
+  $('adminPanel').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function $(id) {
+  return document.getElementById(id);
+}
+
+// ===== Init =====
+async function init() {
+  showLoading('Connecting to cloud...');
+
+  await initSupabase();
+
+  showLoading('Loading data...');
+  const cloudData = await loadFromCloudDB();
+
+  let data;
+  if (cloudData) {
+    data = cloudData;
+    saveLocal(data);
+  } else {
+    data = getLocalData();
+  }
+
+  renderAll(data);
+  initPPT();
+
+  hideLoading();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
