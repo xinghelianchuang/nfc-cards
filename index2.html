@@ -959,7 +959,7 @@ function renderAll(d) {
     $('d-website').href = '#';
     $('d-website').onclick = e => {
       e.preventDefault();
-      openAdmin();
+      checkPassword();
       toast('Please add company website first');
     };
   }
@@ -990,7 +990,7 @@ function renderAll(d) {
     };
   } else {
     $('videoWrap').onclick = () => {
-      openAdmin();
+      checkPassword();
       toast('Please upload video or add video link first');
     };
   }
@@ -1007,7 +1007,7 @@ function renderAll(d) {
   $('dcard-web').onclick = d.webUrl ?
     () => window.open(d.webUrl, '_blank') :
     () => {
-      openAdmin();
+      checkPassword();
       toast('Please add website link first');
     };
 
@@ -1016,7 +1016,7 @@ function renderAll(d) {
   $('dcard-book').onclick = d.bookUrl ?
     () => window.open(d.bookUrl, '_blank') :
     () => {
-      openAdmin();
+      checkPassword();
       toast('Please add catalog link first');
     };
 
@@ -1082,7 +1082,7 @@ function changeSlide(dir) {
 function doCall() {
   const p = getLocalData().phone;
   if (!p) {
-    openAdmin();
+    checkPassword();
     toast('Please add phone number first');
     return;
   }
@@ -1092,7 +1092,7 @@ function doCall() {
 function showWechat() {
   const w = getLocalData().wechat;
   if (!w) {
-    openAdmin();
+    checkPassword();
     toast('Please add WhatsApp number first');
     return;
   }
@@ -1105,14 +1105,42 @@ function closeWechat() {
 
 function saveContact() {
   const d = getLocalData();
-  const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${d.name}\nORG:${d.company}\nTITLE:${d.position}\nTEL:${d.phone}\nEMAIL:${d.email}\nURL:${d.website || ''}\nADR:;;${d.address || ''}\nEND:VCARD`;
+  const vcard = [
+    'BEGIN:VCARD',
+    'VERSION:3.0',
+    `FN:${d.name}`,
+    `ORG:${d.company}`,
+    `TITLE:${d.position}`,
+    d.phone ? `TEL:${d.phone}` : '',
+    d.email ? `EMAIL:${d.email}` : '',
+    'END:VCARD'
+  ].filter(Boolean).join('\r\n');
+  
+  // Try native share (best for mobile)
+  if (navigator.share) {
+    const blob = new Blob([vcard], { type: 'text/vcard' });
+    const file = new File([blob], `${d.name || 'contact'}.vcf`, { type: 'text/vcard' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: d.name }).catch(() => downloadVcard(vcard, d.name));
+      return;
+    }
+  }
+  
+  // Fallback: data URI download
+  downloadVcard(vcard, d.name);
+}
+
+function downloadVcard(vcard, name) {
+  const base64 = btoa(unescape(encodeURIComponent(vcard)));
+  const dataUri = `data:text/vcard;base64,${base64}`;
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([vcard], {
-    type: 'text/vcard'
-  }));
-  a.download = (d.name || 'Business Card') + '.vcf';
+  a.href = dataUri;
+  a.download = (name || 'contact') + '.vcf';
+  a.style.display = 'none';
+  document.body.appendChild(a);
   a.click();
-  toast('👤 Contact file downloaded');
+  setTimeout(() => document.body.removeChild(a), 100);
+  toast('👤 联系人已下载');
 }
 
 function shareLink() {
@@ -1129,7 +1157,7 @@ function playVideo() {
   if (v.src) {
     v.play();
   } else {
-    openAdmin();
+    checkPassword();
     toast('Please upload video or add video link first');
   }
 }
@@ -1138,7 +1166,7 @@ function gotoWeb() {
   const d = getLocalData();
   if (d.webUrl) window.open(d.webUrl, '_blank');
   else {
-    openAdmin();
+    checkPassword();
     toast('Please add website link first');
   }
 }
@@ -1147,7 +1175,7 @@ function gotoBook() {
   const d = getLocalData();
   if (d.bookUrl) window.open(d.bookUrl, '_blank');
   else {
-    openAdmin();
+    checkPassword();
     toast('Please add catalog link first');
   }
 }
