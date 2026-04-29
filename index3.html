@@ -1142,101 +1142,70 @@ function closeWechat() {
 
 function saveContact() {
   const d = getLocalData();
-  const vcard = [
-    'BEGIN:VCARD',
-    'VERSION:3.0',
-    'N:' + d.name,
-    `FN:${d.name}`,
-    `ORG:${d.company || ''}`,
-    d.position ? `TITLE:${d.position}` : '',
-    d.phone ? `TEL;TYPE=CELL:${d.phone}` : '',
-    d.email ? `EMAIL:${d.email}` : '',
-    'END:VCARD'
-  ].filter(Boolean).join('\r\n');
   
-  // 生成vCard的data URI（用于QR码）
-  const dataUri = 'data:text/vcard;charset=utf-8,' + encodeURIComponent(vcard);
+  // 构建联系人信息文本
+  const info = [
+    d.name,
+    d.company,
+    d.position,
+    d.phone ? '电话: ' + d.phone : '',
+    d.email ? '邮箱: ' + d.email : '',
+    d.website ? '网址: ' + d.website : ''
+  ].filter(Boolean).join('\n');
   
-  // 显示QR码弹窗
-  $('qrTitle').textContent = d.name || '保存联系人';
-  $('qrCode').innerHTML = '';
-  
-  // 生成QR码
-  const qrImg = document.createElement('img');
-  qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(dataUri);
-  qrImg.alt = 'QR Code';
-  qrImg.style.width = '200px';
-  qrImg.style.height = '200px';
-  qrImg.onerror = () => {
-    $('qrCode').innerHTML = '<p style="color:#ff6b6b">QR码生成失败<br><small>请检查网络连接</small></p>';
-  };
-  $('qrCode').appendChild(qrImg);
-  
-  $('qrPopup').classList.add('show');
+  // 复制到剪贴板
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(info).then(() => {
+      toast('✅ 联系人信息已复制');
+    }).catch(() => {
+      fallbackCopy(info);
+    });
+  } else {
+    fallbackCopy(info);
+  }
 }
 
-function closeQr() {
-  $('qrPopup').classList.remove('show');
-}
-
-function downloadVcard(vcard, name) {
-  const fileName = (name || 'contact').replace(/\s+/g, '_') + '.vcf';
-  const blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8' });
-  
-  // Try createObjectURL first (works on most browsers)
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = fileName;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  
-  // Clean up the blob URL after a delay
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-  
-  toast('👤 正在保存，请在新页面点击"保存联系人"');
+function fallbackCopy(text) {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.cssText = 'position:fixed;left:-9999px;top:-9999px;';
+  document.body.appendChild(textarea);
+  textarea.select();
+  try {
+    document.execCommand('copy');
+    toast('✅ 联系人信息已复制');
+  } catch (e) {
+    toast('请长按复制: ' + text.substring(0, 20) + '...');
+  }
+  document.body.removeChild(textarea);
 }
 
 function shareLink() {
   const url = location.href;
-  const d = getLocalData();
-  const shareText = `${d.name || '商务名片'}\n${d.company || ''}\n${url}`;
-  
-  // Try Web Share API first (mobile native share)
-  if (navigator.share) {
-    navigator.share({
-      title: d.name || '商务名片',
-      text: shareText,
-      url: url
-    }).then(() => toast('✅ 已分享')).catch(() => copyToClipboard(url));
-    return;
-  }
-  
-  // Fallback: copy to clipboard
-  copyToClipboard(url);
-}
-
-function copyToClipboard(text) {
-  // Try modern clipboard API
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(() => {
+    navigator.clipboard.writeText(url).then(() => {
       toast('🔗 链接已复制到剪贴板');
     }).catch(() => {
-      // Fallback to older method
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      try { document.execCommand('copy'); toast('🔗 链接已复制'); } catch (e) { toast('请长按复制链接'); }
-      document.body.removeChild(textarea);
+      fallbackCopyLink(url);
     });
   } else {
-    // Very old fallback
-    prompt('复制此链接:', text);
+    fallbackCopyLink(url);
   }
+}
+
+function fallbackCopyLink(text) {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.cssText = 'position:fixed;left:-9999px;top:-9999px;';
+  document.body.appendChild(textarea);
+  textarea.select();
+  try {
+    document.execCommand('copy');
+    toast('🔗 链接已复制到剪贴板');
+  } catch (e) {
+    toast('请长按复制链接');
+  }
+  document.body.removeChild(textarea);
 }
 
 function playVideo() {
