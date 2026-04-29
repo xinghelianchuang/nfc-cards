@@ -968,7 +968,7 @@ function renderAll(d) {
 
   if (d.website) {
     $('d-website').textContent = d.website;
-    $('d-website').href = d.website;
+    $('d-website').href = normalizeUrl(d.website);
     $('d-website').onclick = null;
   } else {
     $('d-website').textContent = 'Add website';
@@ -1026,7 +1026,7 @@ function renderAll(d) {
   $('d-web-title').textContent = d.webTitle;
   $('d-web-desc').textContent = d.webUrl ? 'Tap to visit →' : 'Edit in admin panel';
   $('dcard-web').onclick = d.webUrl ?
-    () => window.open(d.webUrl, '_blank') :
+    () => window.open(normalizeUrl(d.webUrl), '_blank') :
     () => {
       checkPassword();
       toast('Please add website link first');
@@ -1131,22 +1131,42 @@ function saveContact() {
   const vcard = [
     'BEGIN:VCARD',
     'VERSION:3.0',
+    'N:' + d.name,
     `FN:${d.name}`,
-    `ORG:${d.company}`,
-    `TITLE:${d.position}`,
-    d.phone ? `TEL:${d.phone}` : '',
+    `ORG:${d.company || ''}`,
+    d.position ? `TITLE:${d.position}` : '',
+    d.phone ? `TEL;TYPE=CELL:${d.phone}` : '',
     d.email ? `EMAIL:${d.email}` : '',
     'END:VCARD'
   ].filter(Boolean).join('\r\n');
   
-  // Try native share (best for mobile)
-  if (navigator.share) {
-    const blob = new Blob([vcard], { type: 'text/vcard' });
-    const file = new File([blob], `${d.name || 'contact'}.vcf`, { type: 'text/vcard' });
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      navigator.share({ files: [file], title: d.name }).catch(() => downloadVcard(vcard, d.name));
-      return;
+  const fileName = (d.name || 'contact').replace(/\s+/g, '_') + '.vcf';
+  
+  // Try Web Share API with file (Android Chrome 25+)
+  if (navigator.share && navigator.canShare) {
+    try {
+      const blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8' });
+      const file = new File([blob], fileName, { type: 'text/vcard' });
+      if (navigator.canShare({ files: [file] })) {
+        navigator.share({
+          files: [file],
+          title: d.name,
+          text: `${d.name} - ${d.company || ''}`
+        }).then(() => toast('✅ 已分享')).catch(() => downloadVcard(vcard, d.name));
+        return;
+      }
+    } catch (e) {
+      console.log('Share with file not supported, trying text share...');
     }
+  }
+  
+  // Try share as text (some apps can receive vCard text)
+  if (navigator.share) {
+    navigator.share({
+      title: d.name,
+      text: vcard
+    }).then(() => toast('✅ 已分享')).catch(() => downloadVcard(vcard, d.name));
+    return;
   }
   
   // Fallback: data URI download
@@ -1154,16 +1174,18 @@ function saveContact() {
 }
 
 function downloadVcard(vcard, name) {
+  const fileName = (name || 'contact').replace(/\s+/g, '_') + '.vcf';
   const base64 = btoa(unescape(encodeURIComponent(vcard)));
-  const dataUri = `data:text/vcard;base64,${base64}`;
+  const dataUri = `data:text/vcard;base64;charset=utf-8,${base64}`;
+  
   const a = document.createElement('a');
   a.href = dataUri;
-  a.download = (name || 'contact') + '.vcf';
-  a.style.display = 'none';
+  a.download = fileName;
   document.body.appendChild(a);
   a.click();
-  setTimeout(() => document.body.removeChild(a), 100);
-  toast('👤 联系人已下载');
+  document.body.removeChild(a);
+  
+  setTimeout(() => toast('👤 请点击下载的文件导入联系人'), 500);
 }
 
 function shareLink() {
@@ -1185,9 +1207,20 @@ function playVideo() {
   }
 }
 
+// 补全网址（如果没有 http:// 或 https:// 前缀）
+function normalizeUrl(url) {
+  if (!url) return '';
+  url = url.trim();
+  if (!url) return '';
+  // 如果已经有 http:// 或 https:// 前缀，直接返回
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  // 否则添加 https:// 前缀
+  return 'https://' + url;
+}
+
 function gotoWeb() {
   const d = getLocalData();
-  if (d.webUrl) window.open(d.webUrl, '_blank');
+  if (d.webUrl) window.open(normalizeUrl(d.webUrl), '_blank');
   else {
     checkPassword();
     toast('Please add website link first');
