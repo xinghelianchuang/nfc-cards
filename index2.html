@@ -1018,7 +1018,7 @@ function renderAll(d) {
       const url = normalizeUrl(d.bookUrl);
       if (url.match(/\.pdf$/i)) {
         const pdfUrl = encodeURIComponent(url);
-        window.open('https://mozilla.github.io/pdf.js/web/viewer.html?file=' + pdfUrl, '_blank');
+        window.open('https://unpkg.com/pdfjs-dist@3.11.174/web/viewer.html?file=' + pdfUrl, '_blank');
       } else {
         window.open(url, '_blank');
       }
@@ -1216,9 +1216,9 @@ function gotoBook() {
     const url = normalizeUrl(d.bookUrl);
     // 如果是PDF，用PDF.js查看器打开
     if (url.match(/\.pdf$/i)) {
-      // 使用Mozilla PDF.js查看器
+      // 使用unpkg CDN（国内可访问）
       const pdfUrl = encodeURIComponent(url);
-      window.open('https://mozilla.github.io/pdf.js/web/viewer.html?file=' + pdfUrl, '_blank');
+      window.open('https://unpkg.com/pdfjs-dist@3.11.174/web/viewer.html?file=' + pdfUrl, '_blank');
     } else {
       window.open(url, '_blank');
     }
