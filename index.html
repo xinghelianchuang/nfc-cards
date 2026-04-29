@@ -1175,19 +1175,19 @@ function saveContact() {
           files: [file],
           title: d.name,
           text: `${d.name} - ${d.company || ''}`
-        }).then(() => toast('✅ 已分享')).catch(() => downloadVcard(vcard, d.name));
+        }).then(() => toast('✅ 已保存到通讯录')).catch(e => { console.log(e); downloadVcard(vcard, d.name); });
         return;
       }
     } catch (e) {
-      console.log('Share with file not supported, trying text share...');
+      console.log('Share with file failed, trying other methods...');
     }
   }
   
-  // Try share as text (some apps can receive vCard text)
+  // Try Web Share API as text fallback
   if (navigator.share) {
     navigator.share({
       title: d.name,
-      text: vcard
+      text: `${d.name}\n${d.company || ''}\n电话: ${d.phone || ''}\n邮箱: ${d.email || ''}`
     }).then(() => toast('✅ 已分享')).catch(() => downloadVcard(vcard, d.name));
     return;
   }
@@ -1198,25 +1198,61 @@ function saveContact() {
 
 function downloadVcard(vcard, name) {
   const fileName = (name || 'contact').replace(/\s+/g, '_') + '.vcf';
-  const base64 = btoa(unescape(encodeURIComponent(vcard)));
-  const dataUri = `data:text/vcard;base64;charset=utf-8,${base64}`;
+  const blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8' });
   
+  // Try createObjectURL first (works on most browsers)
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = dataUri;
+  a.href = url;
   a.download = fileName;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   
-  setTimeout(() => toast('👤 请点击下载的文件导入联系人'), 500);
+  // Clean up the blob URL after a delay
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  
+  toast('👤 正在保存，请在新页面点击"保存联系人"');
 }
 
 function shareLink() {
   const url = location.href;
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(url).then(() => toast('🔗 Link copied!'));
+  const d = getLocalData();
+  const shareText = `${d.name || '商务名片'}\n${d.company || ''}\n${url}`;
+  
+  // Try Web Share API first (mobile native share)
+  if (navigator.share) {
+    navigator.share({
+      title: d.name || '商务名片',
+      text: shareText,
+      url: url
+    }).then(() => toast('✅ 已分享')).catch(() => copyToClipboard(url));
+    return;
+  }
+  
+  // Fallback: copy to clipboard
+  copyToClipboard(url);
+}
+
+function copyToClipboard(text) {
+  // Try modern clipboard API
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      toast('🔗 链接已复制到剪贴板');
+    }).catch(() => {
+      // Fallback to older method
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try { document.execCommand('copy'); toast('🔗 链接已复制'); } catch (e) { toast('请长按复制链接'); }
+      document.body.removeChild(textarea);
+    });
   } else {
-    prompt('Copy this link:', url);
+    // Very old fallback
+    prompt('复制此链接:', text);
   }
 }
 
