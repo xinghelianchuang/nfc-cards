@@ -1038,7 +1038,8 @@ function renderAll(d) {
     () => {
       const url = normalizeUrl(d.bookUrl);
       if (url.match(/\.pdf$/i)) {
-        window.open('https://docs.google.com/gview?url=' + encodeURIComponent(url) + '&embedded=true', '_blank');
+        const pdfUrl = encodeURIComponent(url);
+        window.open('https://mozilla.github.io/pdf.js/web/viewer.html?file=' + pdfUrl, '_blank');
       } else {
         window.open(url, '_blank');
       }
@@ -1238,9 +1239,11 @@ function gotoBook() {
   const d = getLocalData();
   if (d.bookUrl) {
     const url = normalizeUrl(d.bookUrl);
-    // 如果是PDF，用Google Docs Viewer打开
+    // 如果是PDF，用PDF.js查看器打开
     if (url.match(/\.pdf$/i)) {
-      window.open('https://docs.google.com/gview?url=' + encodeURIComponent(url) + '&embedded=true', '_blank');
+      // 使用Mozilla PDF.js查看器
+      const pdfUrl = encodeURIComponent(url);
+      window.open('https://mozilla.github.io/pdf.js/web/viewer.html?file=' + pdfUrl, '_blank');
     } else {
       window.open(url, '_blank');
     }
