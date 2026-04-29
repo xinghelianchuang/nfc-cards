@@ -50,6 +50,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .close-btn{padding:11px 36px;background:#1a1a2e;color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:14px;font-weight:500;transition:background .3s}
 .close-btn:hover{background:#2a2a4e}
 
+/* ===== PDF Viewer Popup ===== */
+.pdf-popup-content{max-width:90%!important;max-height:95vh!important;width:95%!important;height:85vh;display:flex;flex-direction:column;padding:20px!important}
+.pdf-popup-content h3{margin-bottom:12px;flex-shrink:0}
+.pdf-popup-content iframe{flex:1;border:none;border-radius:10px;background:#fff}
+
 /* ===== Toast ===== */
 .toast{position:fixed;top:40px;left:50%;transform:translateX(-50%);background:rgba(26,26,46,.92);color:#fff;padding:12px 28px;border-radius:10px;font-size:14px;z-index:2001;display:none;white-space:nowrap;backdrop-filter:blur(4px);box-shadow:0 4px 20px rgba(0,0,0,.2)}
 .toast.show{display:block;animation:fadeDown .3s}
@@ -327,6 +332,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
     </div>
     <p>WhatsApp: <span id="d-wechat2">Add number</span></p>
     <button class="close-btn" onclick="closeWechat()">Close</button>
+  </div>
+</div>
+
+<!-- PDF Viewer Popup -->
+<div class="wx-popup" id="pdfPopup">
+  <div class="wx-popup-content pdf-popup-content">
+    <h3 id="pdfTitle">PDF Viewer</h3>
+    <iframe id="pdfFrame" src="" width="100%" height="90%"></iframe>
+    <button class="close-btn" onclick="closePdf()">Close</button>
   </div>
 </div>
 
@@ -1017,8 +1031,9 @@ function renderAll(d) {
     () => {
       const url = normalizeUrl(d.bookUrl);
       if (url.match(/\.pdf$/i)) {
-        const pdfUrl = encodeURIComponent(url);
-        window.open('https://unpkg.com/pdfjs-dist@3.11.174/web/viewer.html?file=' + pdfUrl, '_blank');
+        $('pdfTitle').textContent = d.bookTitle || 'PDF Viewer';
+        $('pdfFrame').src = url;
+        $('pdfPopup').classList.add('show');
       } else {
         window.open(url, '_blank');
       }
@@ -1214,11 +1229,11 @@ function gotoBook() {
   const d = getLocalData();
   if (d.bookUrl) {
     const url = normalizeUrl(d.bookUrl);
-    // 如果是PDF，用PDF.js查看器打开
+    // 如果是PDF，直接在弹窗里显示
     if (url.match(/\.pdf$/i)) {
-      // 使用unpkg CDN（国内可访问）
-      const pdfUrl = encodeURIComponent(url);
-      window.open('https://unpkg.com/pdfjs-dist@3.11.174/web/viewer.html?file=' + pdfUrl, '_blank');
+      $('pdfTitle').textContent = d.bookTitle || 'PDF Viewer';
+      $('pdfFrame').src = url;
+      $('pdfPopup').classList.add('show');
     } else {
       window.open(url, '_blank');
     }
@@ -1226,6 +1241,11 @@ function gotoBook() {
     checkPassword();
     toast('Please add catalog link first');
   }
+}
+
+function closePdf() {
+  $('pdfPopup').classList.remove('show');
+  $('pdfFrame').src = '';
 }
 
 function toast(msg) {
