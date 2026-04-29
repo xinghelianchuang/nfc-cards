@@ -1035,7 +1035,14 @@ function renderAll(d) {
   $('d-book-title').textContent = d.bookTitle;
   $('d-book-desc').textContent = d.bookUrl ? 'Tap to view →' : 'Edit in admin panel';
   $('dcard-book').onclick = d.bookUrl ?
-    () => window.open(d.bookUrl, '_blank') :
+    () => {
+      const url = normalizeUrl(d.bookUrl);
+      if (url.match(/\.pdf$/i)) {
+        window.open('https://docs.google.com/gview?url=' + encodeURIComponent(url) + '&embedded=true', '_blank');
+      } else {
+        window.open(url, '_blank');
+      }
+    } :
     () => {
       checkPassword();
       toast('Please add catalog link first');
@@ -1229,8 +1236,15 @@ function gotoWeb() {
 
 function gotoBook() {
   const d = getLocalData();
-  if (d.bookUrl) window.open(d.bookUrl, '_blank');
-  else {
+  if (d.bookUrl) {
+    const url = normalizeUrl(d.bookUrl);
+    // 如果是PDF，用Google Docs Viewer打开
+    if (url.match(/\.pdf$/i)) {
+      window.open('https://docs.google.com/gview?url=' + encodeURIComponent(url) + '&embedded=true', '_blank');
+    } else {
+      window.open(url, '_blank');
+    }
+  } else {
     checkPassword();
     toast('Please add catalog link first');
   }
